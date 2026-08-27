@@ -248,6 +248,41 @@ Phase สั้นๆ ที่คนมักข้าม แต่เป็น
 - **Dependency Inversion Principle** — ชั้นในต้องไม่รู้จักชั้นนอก
 - ราคาที่ต้องจ่าย: abstraction ที่เพิ่มขึ้นและเมื่อไหร่ที่มัน**ไม่คุ้ม** (สำคัญพอๆ กับตอนที่มันคุ้ม)
 
+> #### 🐍 นำมาใช้กับ Django REST Framework ยังไง
+>
+> ตัวอย่างใน [`phase-1-architecture/demo-clean-arch/`](./phase-1-architecture/demo-clean-arch/) **ไม่ใช้เฟรมเวิร์กเลย** (`dependencies = []`) โดยตั้งใจ — เพื่อพิสูจน์ว่า business logic ไม่จำเป็นต้องรู้จักเฟรมเวิร์กใดๆ ถ้าตัวอย่างผูกกับ FastAPI จะแยกไม่ออกว่าอะไรคือหลักการ อะไรคือวิธีของเฟรมเวิร์ก
+>
+> | ชั้นในตัวอย่าง | ใน DRF คือ | กฎ |
+> | :--- | :--- | :--- |
+> | `presentation/cli.py` | ViewSet / APIView / URL | รับ request → เรียก use case → คืน response **เท่านั้น** |
+> | `application/use_cases/` | *(ชั้นที่ยังไม่มีในโค้ดปัจจุบัน)* | business logic ที่ตอนนี้อยู่ใน view ต้องย้ายมาที่นี่ |
+> | `application/ports/` | interface ของ repository / external service | domain กำหนดว่าต้องการอะไร ไม่ใช่ ORM กำหนด |
+> | `domain/` | Entity + กฎธุรกิจ | **ห้าม import django** |
+> | `infrastructure/adapters/` | Django ORM Model / manager | ที่เดียวที่ Django อยู่ได้ |
+>
+> **Serializer อยู่ที่ `presentation`** และทำได้แค่ validate **รูปร่าง** (field ครบไหม ชนิดถูกไหม)
+> ส่วน validate **กฎ** (step นี้ตอบได้ไหม · ใครมีสิทธิ์) ต้องอยู่ใน domain
+> ⇒ การแยกสองอย่างนี้ออกจากกันคือ **งานใหญ่ที่สุดของ Phase 1** สำหรับ Paystation เพราะตอนนี้ปนกันอยู่ใน form/serializer
+>
+> ##### ⚠️ ปัญหาเฉพาะของ Django: Model = Active Record
+>
+> Django Model ตัวเดียวทั้งถือข้อมูลและรู้วิธีคุยกับ DB ซึ่ง**ขัดกับ Dependency Rule โดยธรรมชาติ** (FastAPI ไม่เจอปัญหานี้เพราะ SQLAlchemy แยก mapping ออกจาก object)
+>
+> | | ทำยังไง | ได้อะไร | เสียอะไร |
+> | :--- | :--- | :--- | :--- |
+> | **A. แยกจริง** | domain เป็น dataclass ล้วน · repository แปลง Django Model ↔ domain object | domain บริสุทธิ์ เทสได้โดยไม่ต้องมี DB | ต้องเขียน mapping มือ งานเพิ่มเยอะ |
+> | **B. ผสม** | ใช้ Django Model เป็น entity ต่อ แต่ย้าย business logic ออกจาก view ไปไว้ใน use case + method บน model | ได้ผล 80% ด้วยแรง 20% | ยังเทสโดยไม่มี DB ไม่ได้ |
+>
+> **✅ แนะนำ: เริ่มที่ B แล้วค่อยยก A เฉพาะ Workflow Aggregate แกนกลาง**
+> เป้าหมายจริงคือ**กฎที่ข้ามได้ทางอื่น** ไม่ใช่ความบริสุทธิ์ของ architecture — แค่ย้ายกฎออกจาก view ไปอยู่ในที่ที่ทุกทางต้องผ่าน ก็แก้ปัญหา "แก้ทีไรเสียว" ได้แล้ว
+>
+> 🚩 **กับดัก**: อย่าเริ่มด้วย A ทั้งระบบ คนที่ลอง Clean Architecture กับ Django เต็มสูตรครั้งแรกมักได้ mapping code กองใหญ่ที่ไม่มีใครอยากดูแล แล้วสรุปผิดว่า "Clean Arch ใช้กับ Django ไม่ได้" ทั้งที่ปัญหาอยู่ที่**ขนาดของก้าวแรก**
+>
+> ##### 📋 ลำดับเริ่มงาน
+> 1. รัน demo ให้ผ่าน (`uv run pytest` → 10 passed) แล้วอ่าน `domain/order.py` ดูว่า import อะไรบ้าง — นั่นคือทั้งหมดของ Dependency Rule
+> 2. เขียน **ADR ฉบับแรก**: เลือก A หรือ B เพราะอะไร *(เป็น Track L ข้อแรกไปในตัว)*
+> 3. ค่อยเริ่มแตะ Paystation
+
 ### 1.2 Domain-Driven Design
 - **Strategic**: Bounded Context, Ubiquitous Language, Context Mapping
 - **Tactical**: Aggregate Root, Entity, Value Object, Domain Event, Repository
@@ -274,8 +309,17 @@ Phase สั้นๆ ที่คนมักข้าม แต่เป็น
 - 🔍 **จุดทบทวน**: หลังจบ Capstone 2 (~เม.ย. 2027) ประเมินอีกครั้งว่าตลาดงานเป้าหมายต้องการ JVM ไหม ถ้าต้องการ จะใช้เวลาแค่ระดับสัปดาห์ เพราะรากฐานพร้อมแล้ว
 
 ### ✅ Exit Criteria — Phase 1
-- [ ] Refactor module จริงในงาน ให้ domain layer **ไม่มี import ของ framework เลยแม้แต่บรรทัดเดียว** (พิสูจน์ด้วยการ grep)
-- [ ] เขียน **ADR 1 ฉบับ** อธิบายการตัดสินใจนั้น และผ่านการรีวิวจากเพื่อนร่วมทีม
+
+**ตัวชี้วัดหลัก — ใช้ได้ทั้งแนวทาง A และ B**
+- [ ] นับ**ทางที่เขียนคำตอบของ step ลง DB ได้**ทั้งหมด แล้ว**ทุกทางบังคับกฎเดียวกัน** — เทียบกับตัวเลข before ที่สำรวจไว้ใน Phase 0
+- [ ] ย้ายกฎทั้ง 4 ข้อในตาราง Phase 0 ออกจาก view/serializer ได้ครบ
+
+**ถ้าเลือกแนวทาง A กับ Workflow Aggregate**
+- [ ] domain layer **ไม่มี import ของ django เลยแม้แต่บรรทัดเดียว** (พิสูจน์ด้วย `grep -r "django" domain/`)
+- [ ] เทส domain ทั้งหมดรันผ่านโดย**ไม่ต้องมี database**
+
+**ทุกกรณี**
+- [ ] เขียน **ADR 1 ฉบับ** อธิบายการตัดสินใจ A vs B และผ่านการรีวิวจากเพื่อนร่วมทีม
 - [ ] อธิบายให้คนอื่นฟังได้ว่า abstraction ไหนใน codebase ปัจจุบัน**ผิด** ผิดยังไง และถ้าแก้จะแก้ยังไง
 
 ### 📚 แหล่งอ้างอิง
