@@ -9,8 +9,8 @@
 
 | Phase | ช่วงเวลา | สถานะ | Exit Criteria |
 | :--- | :--- | :---: | :---: |
-| **P0** Baseline & Setup | ส.ค. 2026 | 🔄 กำลังทำ | 0 / 5 |
-| **P1** [Architecture](./phase-1-architecture/) | ก.ย. – พ.ย. 2026 | ⬜ ยังไม่เริ่ม | 0 / 3 |
+| **P0** Baseline & Setup | ส.ค. 2026 | ✅ เสร็จแล้ว | 5 / 5 |
+| **P1** [Architecture](./phase-1-architecture/) | ก.ย. – พ.ย. 2026 *(เริ่มจริง 27 ส.ค.)* | 🔄 กำลังทำ | 0 / 6 |
 | **P2** [Data Layer](./phase-2-data/) | พ.ย. 2026 – ม.ค. 2027 | ⬜ ยังไม่เริ่ม | 0 / 4 |
 | **P3** [Distributed](./phase-3-distributed/) | ม.ค. – เม.ย. 2027 | ⬜ ยังไม่เริ่ม | 0 / 4 |
 | **P4** [Security](./phase-4-security/) | เม.ย. – พ.ค. 2027 | ⬜ ยังไม่เริ่ม | 0 / 3 |
@@ -33,6 +33,7 @@ backend-engineering/
 ├── roadmap.md                    # แผนหลัก — เริ่มอ่านที่นี่
 │
 ├── phase-1-architecture/         # โน้ต + โค้ดตัวอย่างของแต่ละ Phase
+│   ├── 00-phase-1-plan.md        # checklist 8 สัปดาห์ของ Phase นี้
 │   ├── 01-clean-architecture.md
 │   └── demo-clean-arch/          # โปรเจกต์ตัวอย่างที่รันได้
 ├── phase-2-data/
