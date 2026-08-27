@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Go (capstone 1)
+bin/
+*.exe
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Benchmark raw output - keep the summarised results in journal/benchmarks/
+*.raw.json
+
+# System
+.DS_Store
+*.log
+tmp/
+scratch/
