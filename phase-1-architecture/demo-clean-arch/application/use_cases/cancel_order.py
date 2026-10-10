@@ -1,19 +1,23 @@
 from dataclasses import dataclass
-from domain.order import OrderStatus
-from domain.exceptions import InvalidOrderStatusError
+
 from application.ports.order_repository import OrderRepository
-from application.ports.stock_service import StockService
 from application.ports.payment_gateway import PaymentGateway
+from application.ports.stock_service import StockService
+from domain.exceptions import InvalidOrderStatusError
+from domain.order import OrderStatus
+
 
 @dataclass(frozen=True)
 class CancelOrderCommand:
     order_id: str
+
 
 @dataclass(frozen=True)
 class CancelOrderResult:
     order_id: str
     status: str
     refunded: bool
+
 
 class CancelOrderUseCase:
     def __init__(
@@ -48,7 +52,5 @@ class CancelOrderUseCase:
         self.order_repo.save(order)
 
         return CancelOrderResult(
-            order_id=order.id or "",
-            status=order.status.value,
-            refunded=refunded
+            order_id=order.id or "", status=order.status.value, refunded=refunded
         )
